@@ -1,0 +1,19 @@
+BDD can not really replace unit testing i.e. testing 100s of possible cases
+on a functional/component level, at least not easily or sanely.
+
+So, in this project, every python file has its own rigorous functional/unit
+tests written in it. For JS we use same directory to write func/unit tests.
+
+This folder is reserved for BDD tests only. These test may simulate atmost
+4 possibilities on any step of a path.  
+e.g. on path `login` 4 different user do it, some are sane and some are insane
+and as are the values they input, my app should handle it all gracefully.
+
+## Workflow
+
+ 1. Write a behaviour test
+ 2. Write (failing) corresponding unit test
+ 3. Make them pass (hardcode, then scaffold, then real code, then...)
+ 4. Refactor
+ 5. Repeat
+
