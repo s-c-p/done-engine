@@ -11,7 +11,7 @@ and as are the values they input, my app should handle it all gracefully.
 
 ## Workflow
 
- 1. Write a behaviour test
+ 1. Write a behaviour test (bit.ly/2u9q02U)
  2. Write (failing) corresponding unit test
  3. Make them pass (hardcode, then scaffold, then real code, then...)
  4. Refactor
