@@ -40,13 +40,13 @@ def populate():
 @bottle.route("/save_todo")
 def save_todo():
 	title = bottle.request.query.title
-	# following if is an edge case, cuz UI would(should) not activate the
-	# make-todo button until something is typed in respective box
-	if title:
-		uid = db.create_todo(title)
-		saved_todo = db.read_task(uid)
-		return json.dumps(saved_todo)
-	return "malformed request, title cannot be falsy"
+	try:
+		_id = db.create_todo(title)
+	except ValueError:
+		return "malformed request, title cannot be falsy"
+	else:
+		saved_todo = db.read_task(_id)
+		return json.dumps(saved_todo, cls=TaskEncoder)
 
 @bottle.route("/update_task")
 def update_task():
@@ -55,15 +55,15 @@ def update_task():
 	# json supplied by js(client) is being translated to py object, IF
 	# however, in future there are more such places, then implement a correct
 	# design pattern for the codec stuff
-	uid = chngd_task.uid
+	_id = chngd_task._id	# take a look at notes of db.update_task
 	# NOTE: respecting seperation of concerns, a js2py-like function is not
 	# implement above in THIS file, but in model.db, which does all the 
 	# validation and cleaning work and also touches the edge case that
-	# uid wasn't stripped of the leadinf dbID_
+	# _id wasn't stripped of the leadinf dbID_
 	title = chngd_task.title
 	nature = chngd_task.nature
 	details = chngd_task.details
-	success = db.update_task(uid, nature, title, details)
+	success = db.update_task(_id, nature, title, details)
 	if success:
 		return "updated successfully"
 	return "something went wrong, didn't commit changes to db"
