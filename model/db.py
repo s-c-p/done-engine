@@ -18,7 +18,7 @@ class aTask():
 		self.details = details
 
 	@staticmethod
-	def _make(argTuple):
+	def _make(argTuple: tuple) -> 'aTask':
 		" only and ONLY for py-izing data read from database "
 		# look ma, no error handling
 		w, x, y, z = argTuple
@@ -34,6 +34,7 @@ class aTask():
 
 @contextmanager
 def sqliteDB(filename):
+	# TODO 484, filename: os.path
 	""" provides with...as... kind of functionality by yielding a functional
 	database cursor and commit-ing and close-ing the connection before return
 	NOTE: this function has side-effects, but only desirable

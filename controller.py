@@ -4,11 +4,13 @@ import bottle
 
 from model import db
 
+# ________________________ constants and data-structs ________________________
+
 CODEC_CONST = "dbID_"
 
 class TaskEncoder(json.JSONEncoder):
 	""" take a aTask collections.namedtuple object and make it truly json """
-	def default(self, theTask):
+	def default(self, theTask: db.aTask):
 		if isinstance(theTask, db.aTask):
 			# NOTE: following is the ONLY place where py id
 			# gets converted to dom compatible id, any violations
@@ -21,12 +23,15 @@ class TaskEncoder(json.JSONEncoder):
 		# return json.JSONEncoder.default(self, obj)
 		return super(TaskEncoder, self).default(theTask)
 
+
+# ________________________________ functions _________________________________
+
 @bottle.route("/")
 def index():
 	return bottle.template("app.htm", version_num="0.1")
 
 @bottle.route("/populate")
-def populate():
+def populate() -> str:
 	# kv pairs not list, thanks to testing with postman
 	# which revealed this kink,
 	# also this is the place to ensure codec db_id <=> js_id
@@ -38,7 +43,7 @@ def populate():
 	return json.dumps(ans, cls=TaskEncoder)
 
 @bottle.route("/save_todo")
-def save_todo():
+def save_todo() -> str:
 	title = bottle.request.query.title
 	try:
 		_id = db.create_todo(title)
@@ -49,7 +54,7 @@ def save_todo():
 		return json.dumps(saved_todo, cls=TaskEncoder)
 
 @bottle.route("/update_task")
-def update_task():
+def update_task() -> str:
 	chngd_task = bottle.request.query
 	# NOTE: @the time of this writing, following is the ONLY line where
 	# json supplied by js(client) is being translated to py object, IF
