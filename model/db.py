@@ -1,13 +1,13 @@
 import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union
 
 import pytest
 
 # ________________________ constants and data-structs ________________________
 
-DB_FILE = "database.sqlite3"???
+#DB_FILE = "database.sqlite3"???
 DB_FILE = "sample.sqlite3"
 
 class aTask():
@@ -60,12 +60,11 @@ def _getStageID(item: str) -> int:
 		x = cur.execute(query, [item])
 		y = x.fetchall()
 	if len(y) < 1:
-		raise ValueError('"{}" is not a valid / pre-defined \
-			stage'.format(item))
+		raise ValueError('"{}" is not a valid / pre-defined stage'.format(item))
 	elif len(y) > 1:
 		raise RuntimeError("db programming error: 1+ instances found")
 	else:
-		ans = y[0][0]
+		ans = int(y[0][0])
 	return ans
 
 def create_todo(title: str) -> int:
@@ -118,7 +117,7 @@ def read_task(uid: int) -> aTask:
 		theTask = y[0]
 	return theTask
 
-def fetch_n(stage: str, n: Union[str, int]="all") -> List[aTask]:
+def fetch_n(stage: str, n: Optional[str] = "all") -> List[aTask]:
 	""" fetches n records from tasks table of nature ~= stage """
 	query = "SELECT	_id FROM tasks WHERE FK_nature=?"
 	nature_id = _getStageID(stage)
@@ -129,16 +128,17 @@ def fetch_n(stage: str, n: Union[str, int]="all") -> List[aTask]:
 			if n == "all":
 				dbAns = cur.execute(query, [nature_id])
 			else:
-				raise ValueError('did not understand meaning of "{0}", \
-					unable to fetch tasks'.format(n))
+				errMsg = 'did not understand meaning of "{0}", unable to fetch tasks'.format(n)
+				raise ValueError(errMsg) from None
 		else:
 			query = query + " LIMIT ?"
 			dbAns = cur.execute(query, [nature_id, limit])
-	ans = list(  map(read_task, dbAns.fetchall())  )
+		dbAns = [_[0] for _ in dbAns.fetchall()]
+	ans = list(  map(read_task, dbAns)  )
 	return ans
 
-def update_task(uid: str, nature: str, title: Optional[str], details: Optional[str]) -> str:
-	query = 'UPDATE tasks SET title=?, details=?, FK_nature=? WHERE _id=?',
+def update_task(uid: int, nature: str, title: Optional[str] = None, details: Optional[str] = None) -> str:
+	query = 'UPDATE tasks SET title=?, details=?, FK_nature=? WHERE _id=?'
 	# First things first, the js is excepted & designed to send uid as int
 	# the following is an edge case check
 	if not isinstance(uid, int):	# if its anything other than int|str PROBLEM
@@ -150,10 +150,8 @@ def update_task(uid: str, nature: str, title: Optional[str], details: Optional[s
 		raise RuntimeError("It looks like user forged update request, because \
 			no task with _id {} was found".format(uid)) from None
 	# remember that only uid and nature arguments are mandatory, so...
-	if title == None:
-		title = task.title
-	if details == None:
-		details = task.details
+	title = title if title else task.title
+	details = details if details else task.details
 	# and now the actual update query
 	with sqliteDB(DB_FILE) as cur:
 		fk = _getStageID(nature)
@@ -238,7 +236,9 @@ def test__getStageID(cru_checks):
 def test_create_todo(cru_checks):
 	x = create_todo("a new todo")
 	assert read_task(x).title == "a new todo"
-	assert create_todo("") == "can't create empty todo"
+	with pytest.raises(ValueError) as excinfo:
+		create_todo("")
+	assert "can't create empty todo" == str(excinfo.value)
 	return
 
 def test_read_task(cru_checks):
@@ -267,6 +267,12 @@ def test_update_task(cru_checks):
 
 @pytest.fixture(scope="function")
 def fake_data():
+	# NOTE: because scope of cru_data fixture is session, therefore
+	# even though I don't supply cru_data as argument to fake_data
+	# the following functions continue to act on the database setup
+	# by cru_data fixture. Its strange though, that if I do pass in
+	# cru_data to fake_data so that fake_data builds upon it, I get
+	# error at time of deletion because the file is still in use
 	create_todo("aa")
 	update_task(create_todo("bb"), "doing")
 	update_task(create_todo("cc"), "hibernating")
@@ -287,3 +293,4 @@ def test_fetch_n(fake_data):
 	assert 'did not understand meaning of "' in str(excinfo.value)
 	assert '", unable to fetch tasks' in str(excinfo.value)
 	return
+
