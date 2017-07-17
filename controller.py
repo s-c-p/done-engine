@@ -9,8 +9,8 @@ from model import db
 CODEC_CONST = "dbID_"
 
 class TaskEncoder(json.JSONEncoder):
-	""" take a aTask collections.namedtuple object and make it truly json """
-	def default(self, theTask: db.aTask):
+	""" take a aTask object and make it truly json """
+	def default(self, theTask: db.aTask): # -> dict:
 		if isinstance(theTask, db.aTask):
 			# NOTE: following is the ONLY place where py id
 			# gets converted to dom compatible id, any violations
@@ -88,3 +88,4 @@ def _nginx3():
 
 if __name__ == '__main__':
 	bottle.run(debug=True, reloader=True)
+

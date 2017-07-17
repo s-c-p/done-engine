@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from contextlib import contextmanager
+from typing import Tuple, Optional, List
 
 import pytest
 
@@ -11,14 +12,14 @@ DB_FILE = "sample.sqlite3"
 
 class aTask():
 	""" struct for storing state of a task """
-	def __init__(self, _id, nature, title, details):
+	def __init__(self, _id: int, nature: str, title: str, details: str) -> None:
 		self._id = _id
 		self.nature = nature
 		self.title = title
 		self.details = details
 
 	@staticmethod
-	def _make(argTuple: tuple) -> 'aTask':
+	def _make(argTuple: Tuple[int, str, str, str]) -> 'aTask':
 		" only and ONLY for py-izing data read from database "
 		# look ma, no error handling
 		w, x, y, z = argTuple
@@ -33,8 +34,8 @@ class aTask():
 # ________________________________ functions _________________________________
 
 @contextmanager
-def sqliteDB(filename):
-	# TODO 484, filename: os.path
+def sqliteDB(filename: str) -> str:
+	# TODO: 484, filename: os.path
 	""" provides with...as... kind of functionality by yielding a functional
 	database cursor and commit-ing and close-ing the connection before return
 	NOTE: this function has side-effects, but only desirable
@@ -48,7 +49,7 @@ def sqliteDB(filename):
 	conn.close()
 	return "commited and closed successfully"
 
-def _getStageID(item):
+def _getStageID(item: str) -> int:
 	""" returns the corresponding _id for item according to enum_stages """
 	# NOTE: most database engines (i.e. ones where you can define fn in SQL
 	# or where enum type is supported) can handle this part internally.
@@ -67,7 +68,7 @@ def _getStageID(item):
 		ans = y[0][0]
 	return ans
 
-def create_todo(title):
+def create_todo(title: str) -> int:
 	""" creates a "todo" and returns the newly created task's _id, it is a
 	delibarate design choice not to accept details and nature. Why?
 	1. to make downloading the brain faster, you write titles of things to do
@@ -82,6 +83,8 @@ def create_todo(title):
 	# make-todo button until something is typed in respective box
 	if not title:
 		raise ValueError("can't create empty todo")
+	if len(title) > 140:
+		title = title[:140]
 	with sqliteDB(DB_FILE) as cur:
 		cur.execute(  query, [title, _getStageID("todo")]  )
 		# hardcode the return value of _getStageID("todo") in production
@@ -91,13 +94,20 @@ def create_todo(title):
 		uid = cur.lastrowid
 	return uid
 
-def read_task(uid):
+def read_task(uid: int) -> aTask:
 	""" query database for tasks with _id == uid and hopefully get exactly one
 	matching value which is parsed to python object before returning
 	"""
-	query = 'SELECT * FROM tasks WHERE _id=?;'
+	query = " \
+	SELECT	 	tasks._id, enum_stages.stage, tasks.title, tasks.details \
+	FROM 		tasks \
+	INNER JOIN 	enum_stages \
+	ON 		tasks.FK_nature=enum_stages._id \
+	WHERE 		tasks._id=?"
 	with sqliteDB(DB_FILE) as cur:
 		x = cur.execute(query, [uid]).fetchall()
+	# DONE: resolved FK_nature, thanks to static typing, just writing the code
+	# helped me discover this issue without even running anything
 	y = list(  map(aTask._make, x)  )
 	if len(y) > 1:
 		raise RuntimeError("fucked: the database's got 1+ instances of \
@@ -108,14 +118,9 @@ def read_task(uid):
 		theTask = y[0]
 	return theTask
 
-def fetch_n(stage, n="all"):
+def fetch_n(stage: str, n: Union[str, int]="all") -> List[aTask]:
 	""" fetches n records from tasks table of nature ~= stage """
-	query = " \
-	SELECT	 	tasks._id, tasks.title, tasks.details, enum_stages.stage \
-	FROM 		tasks \
-	INNER JOIN 	enum_stages \
-	ON 			tasks.FK_nature=enum_stages._id \
-	WHERE 		FK_nature=?"
+	query = "SELECT	_id FROM tasks WHERE FK_nature=?"
 	nature_id = _getStageID(stage)
 	with sqliteDB(DB_FILE) as cur:
 		try:
@@ -129,10 +134,10 @@ def fetch_n(stage, n="all"):
 		else:
 			query = query + " LIMIT ?"
 			dbAns = cur.execute(query, [nature_id, limit])
-	ans = list(  map(aTask._make, dbAns.fetchall())  )
+	ans = list(  map(read_task, dbAns.fetchall())  )
 	return ans
 
-def update_task(uid, nature, title=None, details=None):
+def update_task(uid: str, nature: str, title: Optional[str], details: Optional[str]) -> str:
 	query = 'UPDATE tasks SET title=?, details=?, FK_nature=? WHERE _id=?',
 	# First things first, the js is excepted & designed to send uid as int
 	# the following is an edge case check
@@ -159,10 +164,10 @@ def update_task(uid, nature, title=None, details=None):
 		return "update successful"
 	else:
 		raise RuntimeError("single update query affected {0} rows, \
-			i.e. duplicate _id(s) found".format(proof))
-	return
+			maybe duplicate _id(s) found".format(proof))
 
-def setupDB(dbFile):
+def setupDB(dbFile: str):
+	# TODO: return some verification
 	query = [
 		'CREATE TABLE enum_stages( _id INTEGER PRIMARY KEY AUTOINCREMENT, stage TEXT NOT NULL/*, CONSTRAINT unique_stage_names UNIQUE(stage)*/);',
 		'INSERT INTO enum_stages (stage) VALUES("todo"), ("done"), ("doing"),("archived"), /*!!!only done things can be archived*/("hibernating"); /*!!!only doing things can be hibernated*/',
