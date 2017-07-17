@@ -34,7 +34,7 @@ class aTask():
 # ________________________________ functions _________________________________
 
 @contextmanager
-def sqliteDB(filename: str) -> str:
+def sqliteDB(filename):
 	# TODO: 484, filename: os.path
 	""" provides with...as... kind of functionality by yielding a functional
 	database cursor and commit-ing and close-ing the connection before return
