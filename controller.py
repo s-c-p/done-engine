@@ -1,3 +1,4 @@
+import sys
 import uuid
 import json
 
@@ -30,6 +31,8 @@ class TaskEncoder(json.JSONEncoder):
 # ____________________________ session constants _____________________________
 
 dbFile = str(uuid.uuid4()) + ".sqlite3"
+if sys.argv[1]:
+	dbFile = sys.argv[1]
 
 
 # ________________________________ functions _________________________________
@@ -96,6 +99,7 @@ def _nginx3():
 
 
 if __name__ == '__main__':
-	# if os.path.isfile:	pass; else:
-	db.setupDB(dbFile)
+	# TODO: don't setup if file exists and schema compilatnt
+	try:	db.setupDB(dbFile)
+	except OSError:	pass
 	bottle.run(debug=True, reloader=True)
