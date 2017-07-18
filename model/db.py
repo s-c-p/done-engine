@@ -1,14 +1,14 @@
 import os
 import sqlite3
+import functools
 from contextlib import contextmanager
-from typing import Tuple, Optional, List, Union
+from typing import Tuple, Optional, List
 
 import pytest
 
 # ________________________ constants and data-structs ________________________
 
-#DB_FILE = "database.sqlite3"???
-DB_FILE = "sample.sqlite3"
+DB_FILE = "database.sqlite3"	# is it needed anymore
 
 class aTask():
 	""" struct for storing state of a task """
@@ -24,12 +24,6 @@ class aTask():
 		# look ma, no error handling
 		w, x, y, z = argTuple
 		return aTask(w, x, y, z)
-
-	def _asdict(self):
-		return
-
-	def _isValid(self):
-		return
 
 # ________________________________ functions _________________________________
 
@@ -49,14 +43,14 @@ def sqliteDB(filename):
 	conn.close()
 	return "commited and closed successfully"
 
-def _getStageID(item: str) -> int:
+def _getStageID(item: str, dbFile: str) -> int:
 	""" returns the corresponding _id for item according to enum_stages """
 	# NOTE: most database engines (i.e. ones where you can define fn in SQL
 	# or where enum type is supported) can handle this part internally.
 	# NOTE: above note makes it clear that this function is sqlite3 specific,
 	# a speedbreaker and other db engines may not need it
 	query = 'SELECT _id FROM enum_stages WHERE stage=?'
-	with sqliteDB(DB_FILE) as cur:
+	with sqliteDB(dbFile) as cur:
 		x = cur.execute(query, [item])
 		y = x.fetchall()
 	if len(y) < 1:
@@ -67,7 +61,7 @@ def _getStageID(item: str) -> int:
 		ans = int(y[0][0])
 	return ans
 
-def create_todo(title: str) -> int:
+def create_todo(dbFile: str, title: str) -> int:
 	""" creates a "todo" and returns the newly created task's _id, it is a
 	delibarate design choice not to accept details and nature. Why?
 	1. to make downloading the brain faster, you write titles of things to do
@@ -84,8 +78,8 @@ def create_todo(title: str) -> int:
 		raise ValueError("can't create empty todo")
 	if len(title) > 140:
 		title = title[:140]
-	with sqliteDB(DB_FILE) as cur:
-		cur.execute(  query, [title, _getStageID("todo")]  )
+	with sqliteDB(dbFile) as cur:
+		cur.execute(  query, [title, _getStageID("todo", dbFile)]  )
 		# hardcode the return value of _getStageID("todo") in production
 		# setup, the only benefit of calling the function and then getting FK
 		# is that during development phase position of stages may change
@@ -93,7 +87,7 @@ def create_todo(title: str) -> int:
 		uid = cur.lastrowid
 	return uid
 
-def read_task(uid: int) -> aTask:
+def read_task(dbFile: str, uid: int) -> aTask:
 	""" query database for tasks with _id == uid and hopefully get exactly one
 	matching value which is parsed to python object before returning
 	"""
@@ -103,7 +97,7 @@ def read_task(uid: int) -> aTask:
 	INNER JOIN 	enum_stages \
 	ON 		tasks.FK_nature=enum_stages._id \
 	WHERE 		tasks._id=?"
-	with sqliteDB(DB_FILE) as cur:
+	with sqliteDB(dbFile) as cur:
 		x = cur.execute(query, [uid]).fetchall()
 	# DONE: resolved FK_nature, thanks to static typing, just writing the code
 	# helped me discover this issue without even running anything
@@ -117,11 +111,11 @@ def read_task(uid: int) -> aTask:
 		theTask = y[0]
 	return theTask
 
-def fetch_n(stage: str, n: Optional[str] = "all") -> List[aTask]:
+def fetch_n(dbFile: str, stage: str, n: Optional[str] = "all") -> List[aTask]:
 	""" fetches n records from tasks table of nature ~= stage """
 	query = "SELECT	_id FROM tasks WHERE FK_nature=?"
-	nature_id = _getStageID(stage)
-	with sqliteDB(DB_FILE) as cur:
+	nature_id = _getStageID(stage, dbFile)
+	with sqliteDB(dbFile) as cur:
 		try:
 			limit = int(n)
 		except ValueError:
@@ -134,10 +128,15 @@ def fetch_n(stage: str, n: Optional[str] = "all") -> List[aTask]:
 			query = query + " LIMIT ?"
 			dbAns = cur.execute(query, [nature_id, limit])
 		dbAns = [_[0] for _ in dbAns.fetchall()]
-	ans = list(  map(read_task, dbAns)  )
+	pf = functools.partial(read_task, dbFile)
+	ans = list(  map(pf, dbAns)  )
 	return ans
 
-def update_task(uid: int, nature: str, title: Optional[str] = None, details: Optional[str] = None) -> str:
+def update_task(dbFile: str
+		, uid: int
+		, nature: str
+		, title: Optional[str] = None
+		, details: Optional[str] = None) -> str:
 	query = 'UPDATE tasks SET title=?, details=?, FK_nature=? WHERE _id=?'
 	# First things first, the js is excepted & designed to send uid as int
 	# the following is an edge case check
@@ -145,7 +144,7 @@ def update_task(uid: int, nature: str, title: Optional[str] = None, details: Opt
 		uid = int(uid.replace("dbID_", ""))
 	# ensure that task exists, and if it does store it in a var
 	try:
-		task = read_task(uid)
+		task = read_task(dbFile, uid)
 	except ValueError:
 		raise RuntimeError("It looks like user forged update request, because \
 			no task with _id {} was found".format(uid)) from None
@@ -153,8 +152,8 @@ def update_task(uid: int, nature: str, title: Optional[str] = None, details: Opt
 	title = title if title else task.title
 	details = details if details else task.details
 	# and now the actual update query
-	with sqliteDB(DB_FILE) as cur:
-		fk = _getStageID(nature)
+	with sqliteDB(dbFile) as cur:
+		fk = _getStageID(nature, dbFile)
 		cur.execute(query, [title, details, fk, uid])
 		proof = cur.rowcount
 	# return some proof of actions done
@@ -184,13 +183,15 @@ def setupDB(dbFile: str):
 
 @pytest.fixture(scope="function")
 def table_checks():
-	setupDB("test_db.sqlite3")
-	yield
-	os.remove("test_db.sqlite3")
+	dbFile = "test_db.sqlite3"
+	setupDB(dbFile)
+	yield locals()
+	os.remove(dbFile)
 	return
 
 def test_setup_for_sql(table_checks):
-	with sqliteDB("test_db.sqlite3") as cur:
+	dbFile = table_checks["dbFile"]
+	with sqliteDB(dbFile) as cur:
 		# should raise no errors
 		cur.execute('INSERT INTO tasks (title, details, FK_nature) VALUES \
 			("a", "bcd", 1);')
@@ -211,57 +212,59 @@ def test_setup_for_fileCheck(monkeypatch):
 		return True
 	monkeypatch.setattr(os.path, "isfile", fake)
 	with pytest.raises(OSError):
-		setupDB(DB_FILE)
+		setupDB("db.py")
 	return
 
 @pytest.fixture(scope="module")
 def cru_checks():
-	original = globals()["DB_FILE"]
-	globals()["DB_FILE"] = "test_db.sqlite3"
-	setupDB(DB_FILE)
-	yield
-	os.remove(DB_FILE)
-	globals()["DB_FILE"] = original
+	dbFile = "test_db.sqlite3"
+	setupDB(dbFile)
+	yield locals()
+	os.remove(dbFile)
 	return
 
 def test__getStageID(cru_checks):
+	dbFile = cru_checks["dbFile"]
 	TRUTH = ["todo", "done", "doing", "archived", "hibernating"]
 	for i, aStage in enumerate(TRUTH):
-		assert _getStageID(aStage) == (i+1)
+		assert _getStageID(aStage, dbFile) == (i+1)
 	with pytest.raises(ValueError) as excinfo:
-		_getStageID("sleeping")
+		_getStageID("sleeping", dbFile)
 	assert 'is not a valid / pre-defined stage' in str(excinfo.value)
 	return
 
 def test_create_todo(cru_checks):
-	x = create_todo("a new todo")
-	assert read_task(x).title == "a new todo"
+	dbFile = cru_checks["dbFile"]
+	x = create_todo(dbFile, "a new todo")
+	assert read_task(dbFile, x).title == "a new todo"
 	with pytest.raises(ValueError) as excinfo:
-		create_todo("")
+		create_todo(dbFile, "")
 	assert "can't create empty todo" == str(excinfo.value)
 	return
 
 def test_read_task(cru_checks):
+	dbFile = cru_checks["dbFile"]
 	with pytest.raises(ValueError) as excinfo:
-		read_task(0.5)
+		read_task(dbFile, 0.5)
 	assert "no task with _id " in str(excinfo.value)
 	assert " found" in str(excinfo.value)
 	return
 
 def test_update_task(cru_checks):
-	uid = create_todo("some useless todo")
-	x = update_task(uid
+	dbFile = cru_checks["dbFile"]
+	uid = create_todo(dbFile, "some useless todo")
+	x = update_task(dbFile, uid
 		, "done"
 		, "this todo is now done"
 		, "details are not important")
 	assert x == "update successful"
-	y = update_task(uid
+	y = update_task(dbFile, uid
 		, "done"
 		, "this todo is now done"
 		, "details are not important")
 	# event though nothing has changed value-wise, an update is still an update
 	assert y == "update successful"
-	z = update_task(uid, "archived")
+	z = update_task(dbFile, uid, "archived")
 	assert z == "update successful"
 	return
 
@@ -273,24 +276,27 @@ def fake_data():
 	# by cru_data fixture. Its strange though, that if I do pass in
 	# cru_data to fake_data so that fake_data builds upon it, I get
 	# error at time of deletion because the file is still in use
-	create_todo("aa")
-	update_task(create_todo("bb"), "doing")
-	update_task(create_todo("cc"), "hibernating")
-	update_task(create_todo("dd"), "done")
-	update_task(create_todo("ee"), "archived")
-	yield
-	print("destroyed fake_data")
+	dbFile = "test_db2.sqlite3"
+	setupDB(dbFile)
+	create_todo(dbFile, "aa")
+	update_task(dbFile, create_todo(dbFile, "bb"), "doing")
+	update_task(dbFile, create_todo(dbFile, "cc"), "hibernating")
+	update_task(dbFile, create_todo(dbFile, "dd"), "done")
+	update_task(dbFile, create_todo(dbFile, "ee"), "archived")
+	yield locals()
+	os.remove(dbFile)
+	print("done")
 	return
 
 def test_fetch_n(fake_data):
-	assert "aa" in [_.title for _ in fetch_n("todo")]
-	assert "bb" in [_.title for _ in fetch_n("doing")]
-	assert "cc" in [_.title for _ in fetch_n("hibernating")]
-	assert "dd" in [_.title for _ in fetch_n("done")]
-	assert "ee" in [_.title for _ in fetch_n("archived")]
+	dbFile = fake_data["dbFile"]
+	assert "aa" in [_.title for _ in fetch_n(dbFile, "todo")]
+	assert "bb" in [_.title for _ in fetch_n(dbFile, "doing")]
+	assert "cc" in [_.title for _ in fetch_n(dbFile, "hibernating")]
+	assert "dd" in [_.title for _ in fetch_n(dbFile, "done")]
+	assert "ee" in [_.title for _ in fetch_n(dbFile, "archived")]
 	with pytest.raises(ValueError) as excinfo:
-		fetch_n("done", "all instances")
+		fetch_n(dbFile, "done", "all instances")
 	assert 'did not understand meaning of "' in str(excinfo.value)
 	assert '", unable to fetch tasks' in str(excinfo.value)
 	return
-

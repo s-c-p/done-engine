@@ -1,6 +1,9 @@
+import uuid
 import json
 
 import bottle
+import pytest
+import requests
 
 from model import db
 
@@ -12,9 +15,9 @@ class TaskEncoder(json.JSONEncoder):
 	""" take a aTask object and make it truly json """
 	def default(self, theTask: db.aTask): # -> dict:
 		if isinstance(theTask, db.aTask):
-			# NOTE: following is the ONLY place where py id
-			# gets converted to dom compatible id, any violations
-			# are either not implementing this encoder or bad desin
+			# NOTE: following is the ONLY place where python specific
+			# id gets converted to dom compatible id, any violations
+			# are either not implementing this encoder or bad design
 			return \
 			{ "id": CODEC_CONST + str(theTask._id)
 			, "title": theTask.title
@@ -24,11 +27,17 @@ class TaskEncoder(json.JSONEncoder):
 		return super(TaskEncoder, self).default(theTask)
 
 
+# ____________________________ session constants _____________________________
+
+dbFile = str(uuid.uuid4()) + ".sqlite3"
+
+
 # ________________________________ functions _________________________________
 
 @bottle.route("/")
 def index():
-	return bottle.template("app.htm", version_num="0.1")
+	# return bottle.template("app.htm", version_num="0.1")
+	return "up and running"
 
 @bottle.route("/populate")
 def populate() -> str:
@@ -36,9 +45,9 @@ def populate() -> str:
 	# which revealed this kink,
 	# also this is the place to ensure codec db_id <=> js_id
 	reqstd = bottle.request.query
-	todos = db.fetch_n("todo", reqstd.todos)
-	dones = db.fetch_n("done", reqstd.dones)
-	doings = db.fetch_n("doing", reqstd.doings)
+	todos = db.fetch_n(dbFile, "todo", reqstd.todos)
+	dones = db.fetch_n(dbFile, "done", reqstd.dones)
+	doings = db.fetch_n(dbFile, "doing", reqstd.doings)
 	ans = todos + dones + doings
 	return json.dumps(ans, cls=TaskEncoder)
 
@@ -46,11 +55,11 @@ def populate() -> str:
 def save_todo() -> str:
 	title = bottle.request.query.title
 	try:
-		_id = db.create_todo(title)
+		_id = db.create_todo(dbFile, title)
 	except ValueError:
 		return "malformed request, title cannot be falsy"
 	else:
-		saved_todo = db.read_task(_id)
+		saved_todo = db.read_task(dbFile, _id)
 		return json.dumps(saved_todo, cls=TaskEncoder)
 
 @bottle.route("/update_task")
@@ -68,7 +77,7 @@ def update_task() -> str:
 	title = chngd_task.title
 	nature = chngd_task.nature
 	details = chngd_task.details
-	success = db.update_task(_id, nature, title, details)
+	success = db.update_task(dbFile, _id, nature, title, details)
 	if success:
 		return "updated successfully"
 	return "something went wrong, didn't commit changes to db"
@@ -87,5 +96,6 @@ def _nginx3():
 
 
 if __name__ == '__main__':
+	# if os.path.isfile:	pass; else:
+	db.setupDB(dbFile)
 	bottle.run(debug=True, reloader=True)
-
