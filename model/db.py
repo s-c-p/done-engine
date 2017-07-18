@@ -138,10 +138,6 @@ def update_task(dbFile: str
 		, title: Optional[str] = None
 		, details: Optional[str] = None) -> str:
 	query = 'UPDATE tasks SET title=?, details=?, FK_nature=? WHERE _id=?'
-	# First things first, the js is excepted & designed to send uid as int
-	# the following is an edge case check
-	if not isinstance(uid, int):	# if its anything other than int|str PROBLEM
-		uid = int(uid.replace("dbID_", ""))
 	# ensure that task exists, and if it does store it in a var
 	try:
 		task = read_task(dbFile, uid)

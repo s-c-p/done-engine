@@ -65,18 +65,22 @@ def save_todo() -> str:
 		saved_todo = db.read_task(dbFile, _id)
 		return json.dumps(saved_todo, cls=TaskEncoder)
 
-@bottle.route("/update_task")
-def update_task() -> str:
-	chngd_task = bottle.request.query
+@bottle.route("/update_task/<uid>/changes")
+def update_task(uid: str) -> str:
+	# First things first, the js is excepted & designed to send uid as int
+	# the following is an edge case check
+	if uid.startswith(CODEC_CONST):
+		print("WARNING: ugly request came in, tolerating")
+		uid = uid.replace(CODEC_CONST, "")
+	# NOTE: respecting seperation of concerns, and without getting too
+	# pedantic, we make sure that db.update_task gets _id as an int
+	try:	_id = int(uid)
+	except ValueError:	return "bad request"
 	# NOTE: @the time of this writing, following is the ONLY line where
 	# json supplied by js(client) is being translated to py object, IF
 	# however, in future there are more such places, then implement a correct
 	# design pattern for the codec stuff
-	_id = chngd_task._id	# take a look at notes of db.update_task
-	# NOTE: respecting seperation of concerns, a js2py-like function is not
-	# implement above in THIS file, but in model.db, which does all the 
-	# validation and cleaning work and also touches the edge case that
-	# _id wasn't stripped of the leadinf dbID_
+	chngd_task = bottle.request.query
 	title = chngd_task.title
 	nature = chngd_task.nature
 	details = chngd_task.details
