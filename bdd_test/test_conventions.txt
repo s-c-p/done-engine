@@ -1,13 +1,40 @@
 BDD can not really replace unit testing i.e. testing 100s of possible cases
 on a functional/component level, at least not easily or sanely.
 
-So, in this project, every python file has its own rigorous functional/unit
-tests written in it. For JS we use same directory to write func/unit tests.
+## Tests
+
+All unit tests are:
+	rigorous (aim for 100% test coverage)
+	robust (i.e. they make the function being tested robust)
+	brutal (edge cases, don't think "but this will never happen", this is
+		dynamically typed env, at least for 3 levels)
+	honest (do 1 thing and 1 thing well, its ok to throw errors)
+
+**Python Code** every file has its own unit tests written in it. Files which
+	import other codes should include appropriate integration tests as well
+**JS Code** unit tests written in same directory, I don't know enough JS to
+	write good integration and behaviour tests so I use Python's splinter
+	library (based on selenium and web driver) to see if DOM manipulation is
+	actually happening as we expect it to (this covers BDD)
 
 This folder is reserved for BDD tests only. These test may simulate atmost
 4 possibilities on any step of a path.  
 e.g. on path `login` 4 different user do it, some are sane and some are insane
 and as are the values they input, my app should handle it all gracefully.
+
+---------------- WORK FLOW ----------------
+
+I expand on snippet, I write nice doc explaining behaviour, type hints and
+	side effects if any of the function.
+Then, before writing any real code, I write robust & brutal (edge cases) unit
+	tests, I DO NOT see it fail.
+Now I write function's code to my heart's content, taking care of mypy,
+	pylint sans pep8, and being as functional as possible. AND this is when I
+	get insights and I update tests accordingly
+Then I walk away, do something else
+I come back, run the test, make them pass
+Next file
+
 
 ## Workflow
 
@@ -16,4 +43,5 @@ and as are the values they input, my app should handle it all gracefully.
  3. Make them pass (hardcode, then scaffold, then real code, then...)
  4. Refactor
  5. Repeat
+
 
