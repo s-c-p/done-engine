@@ -48,9 +48,9 @@ def populate() -> str:
 	# which revealed this kink,
 	# also this is the place to ensure codec db_id <=> js_id
 	reqstd = bottle.request.query
-	todos = db.fetch_n(dbFile, "todo", reqstd.todos)
-	dones = db.fetch_n(dbFile, "done", reqstd.dones)
-	doings = db.fetch_n(dbFile, "doing", reqstd.doings)
+	todos = db.fetch_n(dbFile, "todo", reqstd.todos or "all")
+	dones = db.fetch_n(dbFile, "done", reqstd.dones or "all")
+	doings = db.fetch_n(dbFile, "doing", reqstd.doings or "all")
 	ans = todos + dones + doings
 	return json.dumps(ans, cls=TaskEncoder)
 
