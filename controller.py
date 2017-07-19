@@ -74,16 +74,18 @@ def update_task(uid: str) -> str:
 		uid = uid.replace(CODEC_CONST, "")
 	# NOTE: respecting seperation of concerns, and without getting too
 	# pedantic, we make sure that db.update_task gets _id as an int
-	try:	_id = int(uid)
-	except ValueError:	return "bad request"
+	try:
+		_id = int(uid)
+	except ValueError:
+		return "bad request"
 	# NOTE: @the time of this writing, following is the ONLY line where
 	# json supplied by js(client) is being translated to py object, IF
 	# however, in future there are more such places, then implement a correct
 	# design pattern for the codec stuff
-	chngd_task = bottle.request.query
-	title = chngd_task.title
-	nature = chngd_task.nature
-	details = chngd_task.details
+	chngd = bottle.request.query
+	title = chngd.title
+	nature = chngd.nature
+	details = chngd.details
 	success = db.update_task(dbFile, _id, nature, title, details)
 	if success:
 		return "updated successfully"
@@ -104,6 +106,8 @@ def _nginx3():
 
 if __name__ == '__main__':
 	# TODO: don't setup if file exists and schema compilatnt
-	try:	db.setupDB(dbFile)
-	except OSError:	pass
+	try:
+		db.setupDB(dbFile)
+	except OSError:
+		pass
 	bottle.run(debug=True, reloader=True)
