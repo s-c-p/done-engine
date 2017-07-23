@@ -95,6 +95,8 @@ function draw(aTask) {
 			// this will only happen if nature == todo, cuz other things can't be edited, so
 				throw `fucky: how did the user manage to edit a ${aTask.nature}, only todo(s) should be editable`;
 			} else {
+				// 1stly, this is a button function
+				// 2ndly, well there is no (sane) way that a task exists on page, and the update requested is anything other than change in nature
 				edit_todo(aTask.id);
 			}
 		} else {
