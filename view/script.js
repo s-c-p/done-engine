@@ -41,7 +41,9 @@ const done = '\
 	<button type="button" class="done__undo_btn">Undone, move back to ToDo\'s</button>\
 </div>'
 
-let WIP_LIMIT = 2	// user configurab;e
+/* ---------------------- user specific configuration ---------------------- */
+
+let WIP_LIMIT = 2
 
 /* ------------------------- TAKEN FROM OUTER WORLD ------------------------ */
 
