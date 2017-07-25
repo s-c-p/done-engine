@@ -10,7 +10,7 @@ from model import db
 
 # ________________________ constants and data-structs ________________________
 
-CODEC_CONST = "dbID_"
+CODEC_PREFIX = "dbID_"
 
 class TaskEncoder(json.JSONEncoder):
 	""" take a aTask object and make it truly json """
@@ -20,7 +20,7 @@ class TaskEncoder(json.JSONEncoder):
 			# id gets converted to dom compatible id, any violations
 			# are either not implementing this encoder or bad design
 			return \
-			{ "id": CODEC_CONST + str(theTask._id)
+			{ "id": CODEC_PREFIX + str(theTask._id)
 			, "title": theTask.title
 			, "nature": theTask.nature
 			, "details": theTask.details }
@@ -69,9 +69,9 @@ def save_todo() -> str:
 def update_task(uid: str) -> str:
 	# First things first, the js is excepted & designed to send uid as int
 	# the following is an edge case check
-	if uid.startswith(CODEC_CONST):
+	if uid.startswith(CODEC_PREFIX):
 		print("WARNING: ugly request came in, tolerating")
-		uid = uid.replace(CODEC_CONST, "")
+		uid = uid.replace(CODEC_PREFIX, "")
 	# NOTE: respecting seperation of concerns, and without getting too
 	# pedantic, we make sure that db.update_task gets _id as an int
 	try:

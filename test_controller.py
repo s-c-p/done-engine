@@ -3,7 +3,7 @@ import json
 import pytest
 import requests
 
-CODEC_CONST = "dbID_"
+CODEC_PREFIX = "dbID_"
 
 # def get(url):
 # 	x = requests.get(url)
@@ -40,7 +40,7 @@ def test_save_todo():
 	assert x.url == 'http://127.0.0.1:8080/save_todo?title=himadri+tung+shring+se'
 	y = json.loads(x.text)
 	assert type(y) is dict
-	assert y["id"].startswith(CODEC_CONST)
+	assert y["id"].startswith(CODEC_PREFIX)
 	return
 
 def test_update_task(uid):
