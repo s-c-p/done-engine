@@ -1,49 +1,51 @@
+/*jshint esversion: 6 */
+
 const CODEC_CONST = "dbID_";
 
-const todo = '\
-<div id="{{db_id}}" class="todo">\
-	<span class="title">{{title}}</span>\
-	<div class="details">{{details}}</div>\
-	<!-- hide test, show logo for buttons -->\
-	<button type="button" class="todo__edit_btn">Edit</button>\
-	<button type="button" class="todo__delete_btn">Delete</button>\
-	<button type="button" class="todo__work_btn">Start Working</button>\
-</div>'
+const todo =
+'<div id="{{db_id}}" class="todo">' +
+	'<span class="title">{{title}}</span>' +
+	'<div class="details">{{details}}</div>' +
+	'<!-- hide test, show logo for buttons -->' +
+	'<button type="button" class="todo__edit_btn">Edit</button>' +
+	'<button type="button" class="todo__delete_btn">Delete</button>' +
+	'<button type="button" class="todo__work_btn">Start Working</button>' +
+'</div>';
 
-const doing = '\
-<div id="{{db_id}}" class="doing">\
-	<div class="pomodoro"></div>\
-	<span class="title">{{title}}</span>\
-	<div class="details">{{details}}</div>\
-	<!-- hide test, show logo for buttons -->\
-	<button type="button" class="doing__markDone_btn">Mark Done</button>\
-	<button type="button" class="doing__hibernate_btn">Hibernate</button>\
-	<button type="button" class="doing__cannotDo_btn">Move back to ToDo\'s</button>\
-</div>'
+const doing = 
+'<div id="{{db_id}}" class="doing">' +
+	'<div class="pomodoro"></div>' +
+	'<span class="title">{{title}}</span>' +
+	'<div class="details">{{details}}</div>' +
+	'<!-- hide test, show logo for buttons -->' +
+	'<button type="button" class="doing__markDone_btn">Mark Done</button>' +
+	'<button type="button" class="doing__hibernate_btn">Hibernate</button>' +
+	'<button type="button" class="doing__cannotDo_btn">Move back to ToDo\'s</button>' +
+'</div>';
 
-const hibernating = '\
-<div id="{{db_id}}" class="hibernating">\
-	<span class="title">{{title}}</span>\
-	<div class="details">{{details}}</div>\
-	<!-- hide test, show logo for buttons -->\
-	<button type="button" class="hibernating__work_btn">Start working</button>\
-	<button type="button" class="hibernating__giveup_btn">Give up and delete!</button>\
-	<button type="button" class="hibernating__cannotDo_btn">Move back to ToDo\'s</button>\
-</div>'
+const hibernating =
+'<div id="{{db_id}}" class="hibernating">' +
+	'<span class="title">{{title}}</span>' +
+	'<div class="details">{{details}}</div>' +
+	'<!-- hide test, show logo for buttons -->' +
+	'<button type="button" class="hibernating__work_btn">Start working</button>' +
+	'<button type="button" class="hibernating__giveup_btn">Give up and delete!</button>' +
+	'<button type="button" class="hibernating__cannotDo_btn">Move back to ToDo\'s</button>' +
+'</div>';
 
-const done = '\
-<div id="{{db_id}}" class="done">\
-	<span class="title">{{title}}</span>\
-	<div class="details">{{details}}</div>\
-	<!-- hide test, show logo for buttons -->\
-	<button type="button" class="done__delete_btn">Delete</button>\
-	<button type="button" class="done__archive_btn">Archive this task</button>\
-	<button type="button" class="done__undo_btn">Undone, move back to ToDo\'s</button>\
-</div>'
+const done =
+'<div id="{{db_id}}" class="done">' +
+	'<span class="title">{{title}}</span>' +
+	'<div class="details">{{details}}</div>' +
+	'<!-- hide test, show logo for buttons -->' +
+	'<button type="button" class="done__delete_btn">Delete</button>' +
+	'<button type="button" class="done__archive_btn">Archive this task</button>' +
+	'<button type="button" class="done__undo_btn">Undone, move back to ToDo\'s</button>' +
+'</div>';
 
 /* ---------------------- user specific configuration ---------------------- */
 
-let WIP_LIMIT = 2
+let WIP_LIMIT = 2;
 
 /* ------------------------- TAKEN FROM OUTER WORLD ------------------------ */
 
@@ -58,7 +60,7 @@ var str2htm = function (validHTMLstr) {
 		frag.appendChild(temp.firstChild);
 	}
 	return frag;
-}
+};
 
 String.prototype.kv_fmt = String.prototype.kv_fmt || function () {
 	/* SO's formatUnicorn which works with {{x}} not the typical {x} */
@@ -93,7 +95,7 @@ function _getTemplateFor(nature_of_task) {
 				break;
 		case "hibernating": template = hibernating;
 				break;
-		default: throw "unknown nature of task found-- " + nature_of_task
+		default: throw "unknown nature of task found-- " + nature_of_task;
 	}
 	return template;
 }
@@ -102,10 +104,10 @@ function _getTextFrom(css_query) {
 	/* get inner text content of elements like p, div, dt, etc. given that
 	 * css_query is valid.
 	 */
-	target = document.querySelector(css_query);
+	let target = document.querySelector(css_query);
 	try {
-		content = target.textContent.trim();
-	} catch {
+		let content = target.textContent.trim();
+	} catch (err) {
 		throw `Could not find "${css_query}", so can't return text content`;
 	}
 	return content;
@@ -120,7 +122,7 @@ function _makeObj(task_id) {
 		nature: document.querySelector("#" + task_id).classList[0],
 		title: _getTextFrom(`#${task_id}.title`),
 		details: _getTextFrom(`#${task_id}.details`)
-	}
+	};
 	return currState;
 }
 
@@ -131,9 +133,9 @@ function updateUIonAPIsuccess(updateObj) {
 	 * an alert message/notification and leave the page as is
 	 * designed to be used by button functions, nw_populate doesn't need this
 	 */
-	ans = nw_updateTask(updateObj)
+	let ans = nw_updateTask(updateObj);
 	if (ans === "updated successfully") {
-		close_the_todo_edit_pop_up()// !! TODO: special case for save_edited_todo, how do I make sure that the pop up gets closed before drawing
+		close_the_todo_edit_pop_up();// !! TODO: special case for save_edited_todo, how do I make sure that the pop up gets closed before drawing
 		draw_task(updateObj);// it will take care of deleting old entry
 		return true;
 	} else {
@@ -150,7 +152,7 @@ function triggerNatureChange(task_id, newNature) {
 		// TODO: logic check here, number of hibernating tasks is limited
 	} else if (newNature === "delete") {
 		// TODO: nature: "deleted", (not done because db.* has not implemented & tested it yet)
-		newNature = "archived"
+		newNature = "archived";
 	}
 	let updatedTask = _makeObj(task_id);
 	updatedTask.nature = newNature;
@@ -161,7 +163,7 @@ function triggerNatureChange(task_id, newNature) {
 
 function nw_populate() {
 	/*defaults + based on user prefs*/
-	let dataFromServer = [{"id": "dbID_1", "title": "Praesent lectus. Vestibulum quam sapien, varius ut, blandit non, interdum in, ante. Vestibulum ante ipsum primis in faucibus orci luctus et ", "details": "Nullam molestie nibh in lectus. Pellentesque at nulla.", "nature": "done"}, {"id": "dbID_2", "title": "Phasellus in felis. Donec semper sapien a libero. Nam dui. Proin leo odio, porttitor id, consequat in, consequat ut, nulla. Sed accumsan fel", "details": "Donec vitae nisi. Nam ultrices, libero non mattis pulvinar, nulla pede ullamcorper augue, a suscipit nulla elit ac nulla. Sed vel enim sit amet nunc viverra dapibus. Nulla suscipit ligula in lacus. Curabitur at ipsum ac tellus semper interdum. Mauris ullamcorper purus sit amet nulla. Quisque arcu libero, rutrum ac, lobortis vel, dapibus at, diam.", "nature": "todo"}, {"id": "dbID_3", "title": "Praesent lectus. Vestibulum quam sapien, varius ut, blandit non, interdum in, ante. Vestibulum ante ipsum primis in faucibus orci luctus et ", "details": "Curabitur gravida nisi at nibh. In hac habitasse platea dictumst. Aliquam augue quam, sollicitudin vitae, consectetuer eget, rutrum at, lorem. Integer tincidunt ante vel ipsum. Praesent blandit lacinia erat. Vestibulum sed magna at nunc commodo placerat. Praesent blandit. Nam nulla.", "nature": "doing"}, {"id": "dbID_4", "title": "Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. Donec dapibus. Duis at velit eu est c", "details": "Pellentesque at nulla.", "nature": "hibernating"}, {"id": "dbID_5", "title": "Nulla ut erat id mauris vulputate elementum. Nullam varius. Nulla facilisi.", "details": "Proin interdum mauris non ligula pellentesque ultrices. Phasellus id sapien in sapien iaculis congue. Vivamus metus arcu, adipiscing molestie, hendrerit at, vulputate vitae, nisl.", "nature": "done"}, {"id": "dbID_6", "title": "Maecenas tristique, est et tempus semper, est quam pharetra magna, ac consequat metus sapien ut nunc. Vestibulum ante ipsum primis in faucib", "details": "Nulla justo. Aliquam quis turpis eget elit sodales scelerisque. Mauris sit amet eros. Suspendisse accumsan tortor quis turpis. Sed ante. Vivamus tortor. Duis mattis egestas metus. Aenean fermentum. Donec ut mauris eget massa tempor convallis. Nulla neque libero, convallis eget, eleifend luctus, ultricies eu, nibh.", "nature": "archived"}, {"id": "dbID_7", "title": "Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. Donec dapibus. Duis at velit eu est c", "details": "Proin interdum mauris non ligula pellentesque ultrices. Phasellus id sapien in sapien iaculis congue. Vivamus metus arcu, adipiscing molestie, hendrerit at, vulputate vitae, nisl. Aenean lectus. Pellentesque eget nunc. Donec quis orci eget orci vehicula condimentum. Curabitur in libero ut massa volutpat convallis.", "nature": "todo"}, {"id": "dbID_8", "title": "In hac habitasse platea dictumst. Aliquam augue quam, sollicitudin vitae, consectetuer eget, rutrum at, lorem. Integer tincidunt ante vel ip", "details": "Praesent id massa id nisl venenatis lacinia. Aenean sit amet justo.", "nature": "todo"}, {"id": "dbID_9", "title": "Nullam orci pede, venenatis non, sodales sed, tincidunt eu, felis. Fusce posuere felis sed lacus. Morbi sem mauris, laoreet ut, rhoncus aliq", "details": "Aenean auctor gravida sem. Praesent id massa id nisl venenatis lacinia. Aenean sit amet justo. Morbi ut odio. Cras mi pede, malesuada in, imperdiet et, commodo vulputate, justo. In blandit ultrices enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Proin interdum mauris non ligula pellentesque ultrices.", "nature": "hibernating"}]
+	let dataFromServer = [{"id": "dbID_1", "title": "Praesent lectus. Vestibulum quam sapien, varius ut, blandit non, interdum in, ante. Vestibulum ante ipsum primis in faucibus orci luctus et ", "details": "Nullam molestie nibh in lectus. Pellentesque at nulla.", "nature": "done"}, {"id": "dbID_2", "title": "Phasellus in felis. Donec semper sapien a libero. Nam dui. Proin leo odio, porttitor id, consequat in, consequat ut, nulla. Sed accumsan fel", "details": "Donec vitae nisi. Nam ultrices, libero non mattis pulvinar, nulla pede ullamcorper augue, a suscipit nulla elit ac nulla. Sed vel enim sit amet nunc viverra dapibus. Nulla suscipit ligula in lacus. Curabitur at ipsum ac tellus semper interdum. Mauris ullamcorper purus sit amet nulla. Quisque arcu libero, rutrum ac, lobortis vel, dapibus at, diam.", "nature": "todo"}, {"id": "dbID_3", "title": "Praesent lectus. Vestibulum quam sapien, varius ut, blandit non, interdum in, ante. Vestibulum ante ipsum primis in faucibus orci luctus et ", "details": "Curabitur gravida nisi at nibh. In hac habitasse platea dictumst. Aliquam augue quam, sollicitudin vitae, consectetuer eget, rutrum at, lorem. Integer tincidunt ante vel ipsum. Praesent blandit lacinia erat. Vestibulum sed magna at nunc commodo placerat. Praesent blandit. Nam nulla.", "nature": "doing"}, {"id": "dbID_4", "title": "Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. Donec dapibus. Duis at velit eu est c", "details": "Pellentesque at nulla.", "nature": "hibernating"}, {"id": "dbID_5", "title": "Nulla ut erat id mauris vulputate elementum. Nullam varius. Nulla facilisi.", "details": "Proin interdum mauris non ligula pellentesque ultrices. Phasellus id sapien in sapien iaculis congue. Vivamus metus arcu, adipiscing molestie, hendrerit at, vulputate vitae, nisl.", "nature": "done"}, {"id": "dbID_6", "title": "Maecenas tristique, est et tempus semper, est quam pharetra magna, ac consequat metus sapien ut nunc. Vestibulum ante ipsum primis in faucib", "details": "Nulla justo. Aliquam quis turpis eget elit sodales scelerisque. Mauris sit amet eros. Suspendisse accumsan tortor quis turpis. Sed ante. Vivamus tortor. Duis mattis egestas metus. Aenean fermentum. Donec ut mauris eget massa tempor convallis. Nulla neque libero, convallis eget, eleifend luctus, ultricies eu, nibh.", "nature": "archived"}, {"id": "dbID_7", "title": "Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. Donec dapibus. Duis at velit eu est c", "details": "Proin interdum mauris non ligula pellentesque ultrices. Phasellus id sapien in sapien iaculis congue. Vivamus metus arcu, adipiscing molestie, hendrerit at, vulputate vitae, nisl. Aenean lectus. Pellentesque eget nunc. Donec quis orci eget orci vehicula condimentum. Curabitur in libero ut massa volutpat convallis.", "nature": "todo"}, {"id": "dbID_8", "title": "In hac habitasse platea dictumst. Aliquam augue quam, sollicitudin vitae, consectetuer eget, rutrum at, lorem. Integer tincidunt ante vel ip", "details": "Praesent id massa id nisl venenatis lacinia. Aenean sit amet justo.", "nature": "todo"}, {"id": "dbID_9", "title": "Nullam orci pede, venenatis non, sodales sed, tincidunt eu, felis. Fusce posuere felis sed lacus. Morbi sem mauris, laoreet ut, rhoncus aliq", "details": "Aenean auctor gravida sem. Praesent id massa id nisl venenatis lacinia. Aenean sit amet justo. Morbi ut odio. Cras mi pede, malesuada in, imperdiet et, commodo vulputate, justo. In blandit ultrices enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Proin interdum mauris non ligula pellentesque ultrices.", "nature": "hibernating"}];
 	return dataFromServer;
 }
 
@@ -173,13 +175,13 @@ function nw_updateTask(update) {}
 
 function draw_task(theTask) {
 	if (theTask.id === undefined) {
-		throw "given argument is not a valid task"
+		throw "given argument is not a valid task";
 	}
-	already_exists = document.getElementById(theTask.id);
+	let already_exists = document.getElementById(theTask.id);
 	if (already_exists) {
 		// i.e. ONLY nature has changed
 		// remember that app's ReST API will only say "updated successfully" on successful DB update so it is important to extract theTask's title
-		theTask = _makeObj(task_id);	// for safety
+		theTask = _makeObj(theTask.id);	// for safety
 		erase_task(theTask.id);
 	}
 	let base = _getTemplateFor(theTask.nature);
@@ -192,7 +194,7 @@ function draw_task(theTask) {
 }
 
 function erase_task(task_id) {
-	domRef = document.getElementById(task_id);
+	let domRef = document.getElementById(task_id);
 	domRef.parentNode.removeChild(domRef);
 }
 
@@ -202,7 +204,7 @@ function create_todo(title) {
 	/* from index.html of the app */
 	try {
 		draw_task(nw_createTask(title));
-	} catch {
+	} catch (err) {
 		;
 	}
 }
@@ -226,17 +228,18 @@ function save_edited_todo(task_id) {
 function btn_edit_todo(task_id) {
 	/* todo__edit_btn */
 	/* NOTE: the only function which doesn't make an API request */
-	const TEMPLATE = '\
-		<div id="..." class="editTodo">\
-			<input class="editTodo__title" value="{{oldTitle}}">\
-			<ul class="editTodo__insertables">\
-				<li>audio</li>	<li>video</li>	<li>image</li>	<li>link</li>\
-			</ul>\
-			<textarea class="editTodo__details">{{oldDetails}}</textarea>\
-			<button type="button" class="editTodo__save_btn">Save Changes</button>\
-		</div>'
+	const TEMPLATE =
+		'<div id="{{db_id}}" class="editTodo">' +
+			'<input class="editTodo__title" value="{{oldTitle}}">' +
+			'<ul class="editTodo__insertables">' +
+				'<li>audio</li>	<li>video</li>	<li>image</li>	<li>link</li>' +
+			'</ul>' +
+			'<textarea class="editTodo__details">{{oldDetails}}</textarea>' +
+			'<button type="button" class="editTodo__save_btn">Save Changes</button>' +
+		'</div>';
 	let old = _makeObj(task_id);
 	let editHTML = TEMPLATE.kv_fmt({
+		db_id: task_id, /*is it needed, only one thing can be edited at once*/
 		oldTitle: old.title,
 		oldDetails: old.details
 	});
