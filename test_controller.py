@@ -5,20 +5,6 @@ import requests
 
 CODEC_PREFIX = "dbID_"
 
-# def get(url):
-# 	x = requests.get(url)
-# 	ans = \
-# 	{ "url": x.url
-# 	, "text": x.text
-# 	, "content": x.content
-# 	, "cookies": x.cookies
-# 	, "elapsed": x.elapsed
-# 	, "headers": x.headers
-# 	, "history": x.history
-# 	, "status_code": x.status_code}
-# 	return ans
-
-
 def test_index():
 	return
 
@@ -32,6 +18,7 @@ def test_populate():
 	assert type(y) is list
 	assert len(y) == 6
 	return
+
 def test_save_todo():
 	apiURL = "http://127.0.0.1:8080/save_todo"
 	req = {'title': 'himadri tung shring se'}
@@ -43,14 +30,16 @@ def test_save_todo():
 	assert y["id"].startswith(CODEC_PREFIX)
 	return
 
-def test_update_task(uid):
-	from io import StringIO
-	from contextlib import redirect_stdout
-	f = StringIO()
-	with redirect_stdout(f):
-		x = requests.get("http://127.0.0.1:8080/update_task/dbID_458/changes?nature=archived")
-		# won't work because stdout occours at server's computer'
-		will logger work, will I be able to get a lock? Search pytest logger
+def test_update_task():
+	apiURL = "http://127.0.0.1:8080/update_task"
+	dirty = "/dbID_458/changes?nature=archived"
+	x = requests.get(apiURL+dirty, allow_redirects=False)
+	assert x.status_code in range(300, 400)
+	assert x.is_redirect
+	x = requests.get(apiURL+dirty)
+	assert x.status_code == 200
+	assert x.text == 'updated successfully'
+	assert x.url == apiURL+dirty.replace(CODEC_PREFIX, "")
 	x = requests.get("http://127.0.0.1:8080/update_task/458/changes?nature=hibernating")
 	assert x.status_code == 200
 	return

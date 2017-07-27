@@ -69,26 +69,33 @@ def save_todo() -> str:
 def update_task(uid: str) -> str:
 	# First things first, the js is excepted & designed to send uid as int
 	# the following is an edge case check
-	if uid.startswith(CODEC_PREFIX):
-		print("WARNING: ugly request came in, tolerating")
-		uid = uid.replace(CODEC_PREFIX, "")
-	# NOTE: respecting seperation of concerns, and without getting too
-	# pedantic, we make sure that db.update_task gets _id as an int
 	try:
+		# respecting seperation of concerns, and without getting too
+		# pedantic, we make sure that db.update_task gets _id as an int
 		_id = int(uid)
 	except ValueError:
-		return "bad request"
-	# NOTE: @the time of this writing, following is the ONLY line where
-	# json supplied by js(client) is being translated to py object, IF
-	# however, in future there are more such places, then implement a correct
-	# design pattern for the codec stuff
-	chngd = bottle.request.query
-	title = chngd.title
-	nature = chngd.nature
-	details = chngd.details
-	success = db.update_task(dbFile, _id, nature, title, details)
-	if success:
-		return "updated successfully"
+		if uid.startswith(CODEC_PREFIX):
+			uid = uid.replace(CODEC_PREFIX, "")
+			# NOTE: TODO: how do I get the current URL?? gotta move away from
+			# bottle to a lib which provides an easy method of doing this,
+			# what follows is a hack
+			x = bottle.request.query
+			redir = "/update_task/{}/changes?"
+			params = dict(zip(x.keys(), x.values()))
+			from urllib.parse import urlencode as enc
+			bottle.redirect(redir.format(uid) + enc(params))
+	else:
+		# NOTE: @the time of this writing, following is the ONLY line where
+		# json supplied by js(client) is being translated to py object, IF
+		# however, in future there are more such places, then implement a correct
+		# design pattern for the codec stuff
+		chngd = bottle.request.query
+		title = chngd.title
+		nature = chngd.nature
+		details = chngd.details
+		success = db.update_task(dbFile, _id, nature, title, details)
+		if success:
+			return "updated successfully"
 	return "something went wrong, didn't commit changes to db"
 
 # static files, which will eventually be handled by nginx
