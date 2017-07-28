@@ -1,95 +1,43 @@
-.title {
-	/* universal style for task's title */
-}
+.todos {/* left or top */}
+.doings {/* widest column, has space below for hibernating tasks */}
+.dones {}
 
-.details {
-	/* universal style for task's details */
-}
 
-.todo {
-	/* left side column or topmost floor */
-}
+.task {/* card */}
+.task__button {/* convert button labaels to hint popup text/tip, show icon */}
 
-.todo__edit_btn {
-	/* pencil as icon */
-}
 
-.todo__delete_btn {
-	/* recycle bin like icon */
-}
+.title {/* universal style for task's title */}
+.details {/* universal style for task's details */}
 
-.todo__work_btn {
-	/* shovel (or something better) icon */
-}
 
-.doing {
-	/* widest column, shows pomodoro watch in speedometer style, pomodoro count and has space below for hibernating tasks */
-}
+.todo {}
+.todo__edit {/* pencil as icon */}
+.todo__delete {/* recycle bin like icon */}
+.todo__work {/* shovel (or something better) icon */}
 
-.pomodoro {
-	/* the CSS made pomodoro watch */
-}
 
-.doing__markDone_btn {
-	/* tick mark icon */
-}
+.doing {}
+.pomodoro {/* pure css pomodoro watch in speedometer style, pomodoro count in tally stylr */}
+.doing__markDone {/* tick mark icon */}
+.doing__hibernate {/* Z^z^^z kind of icon */}
+.doing__cannotDo {/* paper pad (or something better) icon */}
 
-.doing__hibernate_btn {
-	/* Z^z^^z kind of icon */
-}
 
-.doing__cannotDo_btn {
-	/* paper pad (or something better) icon */
-}
+.hibernating {/* take 100% width available, like safari's tabs */}
+.hibernating__work {/* sunshine/sunrise or kick icon */}
+.hibernating__giveup {/* recycle bin like icon */}
+.hibernating__cannotDo {/* paper pad (or something better) icon */}
 
-.hibernating {
-	/* take 100% width, like safari's tabs */
-}
 
-.hibernating__work_btn {
-	/* sunshine/sunrise or kick icon */
-}
+.done {}
+.done__delete {/* recycle bin like icon */}
+.done__archive {/* double ticks or folder like icon */}
+.done__undo {/* left arow on paper pad */}
 
-.hibernating__giveup_btn {
-	/* recycle bin like icon */
-}
 
-.hibernating__cannotDo_btn {
-	/* paper pad (or something better) icon */
-}
-
-.done {
-	/* comment */
-}
-
-.done__delete_btn {
-	/* recycle bin like icon */
-}
-
-.done__archive_btn {
-	/* double ticks or folder like icon */
-}
-
-.done__undo_btn {
-	/* left arow on paper pad */
-}
-
-.editTodo {
-	/* WHOA, modal box */
-}
-
-.editTodo__title {
-	/* comment */
-}
-
-.editTodo__insertables {
-	/* comment */
-}
-
-.editTodo__details {
-	/* comment */
-}
-
-.editTodo__save_btn {
-	/* comment */
-}
+.editTodo {/* WHOA, modal box */}
+.editTodo__title {}
+.editTodo__insertables {}
+.editTodo__details {}
+.editTodo__save {}
