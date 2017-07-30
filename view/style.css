@@ -4,10 +4,15 @@ body {
 	display: flex;
 }
 
-.todos {/* left or top */}
-.doings {/* widest column, has space below for hibernating tasks */}
-.dones {}
-
+.todos {/* left or top */
+	flex: 1;
+}
+.doings {/* widest column, has space below for hibernating tasks */
+	flex: 3;
+}
+.dones {
+	flex: 1;
+}
 
 .task {/* card */}
 .task__button {/* convert button labaels to hint popup text/tip, show icon */}
