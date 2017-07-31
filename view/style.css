@@ -12,7 +12,10 @@ body {
 	flex: 1;
 }
 
-.task {/* card */}
+.task {
+	/* card */
+	border: 2px #ccc solid;padding: 20px;
+}
 .task__button {/* convert button labaels to hint popup text/tip, show icon */}
 
 
